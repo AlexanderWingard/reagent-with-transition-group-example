@@ -1,0 +1,20 @@
+* Using react-transition-group with reagent
+** [[https://alexanderwingard.github.io/reagent-with-transition-group-example/resources/public/index.html][Demo]]
+[[file:src/core.cljs][Source]]
+
+Small demo of using [[https://github.com/reactjs/react-transition-group][React Transition Group]] with [[https://github.com/reagent-project/reagent][Reagent]].
+
+Ideally this should work:
+#+BEGIN_SRC clojure
+  (reagent.core/create-class 
+    {:reagent-render [:div "Component"]
+     :component-will-appear (fn [cb] (cb))
+     :component-will-enter (fn [cb] (cb))
+    }
+#+END_SRC
+
+However, I could not get it working so instead i used aset to set the react lifecycle callbacks.
+
+If you want to coordinate enter and leave several options are available, here I use a channel that receives info from both and then runs the transition.
+
+I used [[https://d3js.org/][D3.js]] to do the animation but several other alternatives exist.
