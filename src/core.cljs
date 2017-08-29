@@ -15,7 +15,9 @@
   (let [data (merge old-data (<! ani-chan))]
     ; Wait until both entering and leaving elements had provided their data
     (if (every? data [:enter :leave])
-      (let [{:keys [enter leave enter-cb leave-cb]} data]
+      (let [{:keys [enter leave
+                    enter-cb leave-cb
+                    enter-height leave-height]} data]
         (.. js/d3
             (select leave)
             (transition)
@@ -26,23 +28,31 @@
                   (.. js/d3
                       (select enter)
                       (style "display" "block")
+                      (style "height" (str leave-height "px"))
                       (transition)
                       (style "opacity" 1)
+                      (style "height" (str enter-height "px"))
                       (on "end" enter-cb)))))
         (recur {}))
       (recur data))))
 
 (defn will-leave [c cb]
-  (put! ani-chan {:leave (r/dom-node c) :leave-cb cb}))
+  (let [d (r/dom-node c)
+        rect (.getBoundingClientRect d)
+        height (- (.-bottom rect) (.-top rect))]
+    (put! ani-chan {:leave d :leave-cb cb :leave-height height})))
 
 (defn will-enter [c cb]
   ; Need to hide before sending to channel otherwise element is visible for a
   ; fraction of a second.
-  (.. js/d3
-      (select (r/dom-node c))
-      (style "display" "none")
-      (style "opacity" 0))
-  (put! ani-chan {:enter (r/dom-node c) :enter-cb cb}))
+  (let [d (r/dom-node c)
+        rect (.getBoundingClientRect d)
+        height (- (.-bottom rect) (.-top rect))]
+    (.. js/d3
+        (select d)
+        (style "display" "none")
+        (style "opacity" 0))
+    (put! ani-chan {:enter d :enter-cb cb :enter-height height})))
 
 (defn comp1 []
   (let [c (r/current-component)]
@@ -59,7 +69,7 @@
   [:h1 (apply str (repeat 20 "Component 2 "))])
 
 (defn app []
-  [:div
+  [:div {:style {:border "1px solid black"}}
    [tg (case (first @state)
          "comp1"
          ^{:key "comp1"} [comp1]
