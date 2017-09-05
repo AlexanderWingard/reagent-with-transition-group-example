@@ -17,22 +17,30 @@
     (if (every? data [:enter :leave])
       (let [{:keys [enter leave
                     enter-cb leave-cb
-                    enter-height leave-height]} data]
+                    enter-height leave-height]} data
+            rect (.getBoundingClientRect leave)]
         (.. js/d3
             (select leave)
+            (style "opacity" 1)
+            (style "position" "fixed")
+            (style "margin" "0px")
+            (style "width" (str (.-width rect) "px"))
+            (style "height" (str (.-height rect) "px"))
+            (style "top" (str (.-top rect) "px"))
+            (style "left" (str (.-left rect) "px"))
             (transition)
             (style "opacity" 0)
             (on "end"
                 (fn []
-                  (leave-cb)
-                  (.. js/d3
-                      (select enter)
-                      (style "display" "block")
-                      (style "height" (str leave-height "px"))
-                      (transition)
-                      (style "opacity" 1)
-                      (style "height" (str enter-height "px"))
-                      (on "end" enter-cb)))))
+                  (leave-cb))))
+        (.. js/d3
+            (select enter)
+            (style "display" "block")
+            (style "height" (str leave-height "px"))
+            (transition)
+            (style "opacity" 1)
+            (style "height" (str enter-height "px"))
+            (on "end" (fn [] (.. js/d3 (select enter) (style "height" nil)) (enter-cb))))
         (recur {}))
       (recur data))))
 
